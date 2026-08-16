@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MeloVerse — منصة قراءة المانجا والمانهوا والمانها" />
+  <title>MeloVerse</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button id="menuBtn" class="icon-btn top-icon" title="القائمة">☰</button>
+      <a href="#/home" class="brand">Melo<span>Verse</span></a>
+      <nav class="nav">
+        <a href="#/home" data-nav="home" class="nav-link"></a>
+        <a href="#/search" data-nav="search" class="nav-link"></a>
+        <a href="#/library" data-nav="library" class="nav-link"></a>
+      </nav>
+      <a href="#/search" class="icon-btn top-icon" id="searchBtnTop" title="البحث">🔍</a>
+      <button id="bellBtn" class="icon-btn top-icon" title="التنبيهات">🔔</button>
+      <button id="langToggle" class="lang-btn" title="Toggle language">EN</button>
+      <div id="userArea"></div>
+    </div>
+    <div class="tabbar" id="tabBar">
+      <button class="tab-btn active" data-tab="latest">🆕 <span data-i18n="tabLatest"></span></button>
+      <button class="tab-btn" data-tab="popular">🔥 <span data-i18n="tabPopular"></span></button>
+      <button class="tab-btn" data-tab="downloads">⬇ <span data-i18n="tabDownloads"></span></button>
+      <button class="tab-btn" data-tab="anime">📺 <span data-i18n="tabAnime"></span></button>
+    </div>
+  </header>
+
+  <main id="app" class="container"></main>
+
+  <footer class="footer">
+    <p data-i18n="footer"></p>
+    <p><a class="mini-link" href="/builds/latest.apk" data-i18n="downloadApp"></a></p>
+  </footer>
+
+  <div id="drawerRoot"></div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+</body>
+</html>

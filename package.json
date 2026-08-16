@@ -1,0 +1,14 @@
+{
+  "name": "meloverse-web",
+  "version": "0.1.0",
+  "description": "MeloVerse web reader — MangaDex-backed reading platform (AR/EN)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^4.19.2"
+  }
+}

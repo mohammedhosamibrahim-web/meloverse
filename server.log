@@ -1,0 +1,5 @@
+[db] backup written
+MeloVerse web running on http://localhost:3000
+[queue] started (1 workers)
+[scheduler] started — jobs: daily_bulk(1440m), ongoing(30m), popular(360m), full(10080m)
+[sources] health monitor started (every 60s)
