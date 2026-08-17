@@ -1,0 +1,19 @@
+# Render blueprint — deploy MeloVerse with one click
+# 1) Push this repo to GitHub  2) New Blueprint → Import from repo
+services:
+  - type: web
+    name: meloverse
+    runtime: node
+    plan: free
+    buildCommand: cd web && npm install --no-audit --no-fund
+    startCommand: cd web && node server.js
+    healthCheckPath: /api/config
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MV_KEYSTORE_PASS
+        value: change-me
+    disk:
+      name: meloverse-data
+      mountPath: /opt/render/project/src/web/data
+      sizeGB: 1

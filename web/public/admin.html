@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeloVerse — لوحة الإشراف</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand">Melo<span>Verse</span> <small style="font-weight:400">🛡 الإشراف</small></a>
+      <div style="flex:1"></div>
+      <button id="logoutBtn" class="user-btn hidden">خروج</button>
+    </div>
+  </header>
+
+  <main class="admin-wrap">
+    <div id="loginBox" class="hidden" style="margin:40px auto;max-width:400px">
+      <div class="modal" style="position:static">
+        <h3>دخول المشرف</h3>
+        <div class="err" id="loginErr"></div>
+        <input id="loginUser" placeholder="اسم المستخدم">
+        <input id="loginPass" type="password" placeholder="كلمة المرور">
+        <button class="btn primary" id="loginBtn" style="width:100%">دخول</button>
+      </div>
+    </div>
+
+    <div id="panel" class="hidden">
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="stats">لوحة القيادة</button>
+        <button class="admin-tab" data-tab="sync">مزامنة المحتوى</button>
+        <button class="admin-tab" data-tab="sources">المصادر</button>
+        <button class="admin-tab" data-tab="ads">الإعلانات والوصول</button>
+        <button class="admin-tab" data-tab="builds">بناء APK</button>
+        <button class="admin-tab" data-tab="comments">التعليقات</button>
+        <button class="admin-tab" data-tab="users">المستخدمون</button>
+        <button class="admin-tab" data-tab="content">المحتوى المحجوب</button>
+        <button class="admin-tab" data-tab="jobs">مهام الجدولة</button>
+        <button class="admin-tab" data-tab="catalog">الفهرس المحلي</button>
+      </div>
+      <div id="tabStats" class="admin-panel"></div>
+      <div id="tabSync" class="admin-panel hidden"></div>
+      <div id="tabSources" class="admin-panel hidden"></div>
+      <div id="tabAds" class="admin-panel hidden"></div>
+      <div id="tabBuilds" class="admin-panel hidden"></div>
+      <div id="tabComments" class="admin-panel hidden"></div>
+      <div id="tabUsers" class="admin-panel hidden"></div>
+      <div id="tabContent" class="admin-panel hidden"></div>
+      <div id="tabJobs" class="admin-panel hidden"></div>
+      <div id="tabCatalog" class="admin-panel hidden"></div>
+    </div>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

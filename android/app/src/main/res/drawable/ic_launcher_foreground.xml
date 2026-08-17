@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Open book glyph for MeloVerse launcher -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- left page -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,42 C47,37 38,35 29,35 C23,35 17,36.5 13,39 L13,71 C17,68.5 23,67 29,67 C38,67 47,69.5 54,75 Z" />
+    <!-- right page -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,42 C61,37 70,35 79,35 C85,35 91,36.5 95,39 L95,71 C91,68.5 85,67 79,67 C70,67 61,69.5 54,75 Z" />
+    <!-- spine -->
+    <path
+        android:fillColor="#EDE9FE"
+        android:pathData="M52,40 L52,77 L56,77 L56,40 Z" />
+</vector>
