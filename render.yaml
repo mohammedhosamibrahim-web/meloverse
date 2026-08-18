@@ -17,3 +17,4 @@ services:
       name: meloverse-data
       mountPath: /opt/render/project/src/web/data
       sizeGB: 1
+buildCommand: cd web && apt-get update && apt-get install -y python3 make g++ && npm install --no-audit --no-fund
