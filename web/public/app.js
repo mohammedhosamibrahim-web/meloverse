@@ -1635,16 +1635,9 @@ async function viewAnimeDetail(app, id) {
   app.innerHTML = spinner();
   let anime = null;
   try {
-    const r = await api(`/api/anime/search?q=${id}`);
-    anime = (r.data || []).find((a) => String(a.id) === String(id)) || (r.data || [])[0];
+    const r = await api(`/api/anime/${id}`);
+    anime = r.data || null;
   } catch {}
-  if (!anime) {
-    // try fetching via trending to find by id
-    try {
-      const r = await api('/api/anime/trending');
-      anime = (r.data || []).find((a) => String(a.id) === String(id)) || null;
-    } catch {}
-  }
   if (!anime) {
     app.innerHTML = `<div class="empty-state"><div class="big">📺</div><div>${t('error')}</div></div>`;
     return;

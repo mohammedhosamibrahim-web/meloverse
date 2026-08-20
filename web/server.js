@@ -154,116 +154,121 @@ app.get('/api/chapter/:id', async (req, res) => {
   }
 });
 
-// ---------- anime via AniList GraphQL (metadata / schedule — no streaming) ----------
-const ANIME_Q = `query($page:Int,$sort:[MediaSort],$search:String){
-  Page(page:$page,perPage:24){
-    media(type:ANIME,isAdult:false,sort:$sort,search:$search){
-      id,title{romaji english native},coverImage{extraLarge large},averageScore,episodes,status,
-      description(asHtml:false),genres,nextAiringEpisode{episode,airingAt}
-    }
-  }
-}`;
-async function anilistGraphql(variables) {
+// ---------- anime: Kitsu primary + Jikan fallback (cloud-IP friendly) ----------
+async function jikanFetch(path) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 45000);
+    const timer = setTimeout(() => ctrl.abort(), 30000);
     try {
-      const res = await fetch('https://graphql.anilist.co', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': UA, Accept: 'application/json' },
-        body: JSON.stringify({ query: ANIME_Q, variables }),
-        signal: ctrl.signal,
+      const res = await fetch('https://api.jikan.moe/v4' + path, {
+        headers: { 'User-Agent': UA, Accept: 'application/json' }, signal: ctrl.signal,
       });
       if (!res.ok) {
-        if ((res.status === 429 || res.status >= 500) && attempt < 3) {
-          await new Promise((r) => setTimeout(r, 3000 * attempt));
-          continue;
-        }
-        throw new Error('anilist ' + res.status);
+        if ((res.status === 429 || res.status >= 500) && attempt < 3) { await new Promise((r) => setTimeout(r, 4000 * attempt)); continue; }
+        throw new Error('jikan ' + res.status);
       }
       return await res.json();
-    } finally {
-      clearTimeout(timer);
-    }
+    } finally { clearTimeout(timer); }
   }
-  throw new Error('anilist failed');
+  throw new Error('jikan failed');
 }
-function mapAnime(d) {
-  const media = (d.data && d.data.Page && d.data.Page.media) || [];
-  return media.map((m) => ({
+async function kitsuFetch(path) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
+    try {
+      const res = await fetch('https://kitsu.io/api/edge' + path, {
+        headers: { 'User-Agent': UA, Accept: 'application/vnd.api+json' }, signal: ctrl.signal,
+      });
+      if (!res.ok) {
+        if ((res.status === 429 || res.status >= 500) && attempt < 3) { await new Promise((r) => setTimeout(r, 4000 * attempt)); continue; }
+        throw new Error('kitsu ' + res.status);
+      }
+      return await res.json();
+    } finally { clearTimeout(timer); }
+  }
+  throw new Error('kitsu failed');
+}
+function mapKitsu(m) {
+  const a = m.attributes || {};
+  const t = a.titles || {};
+  return {
     id: m.id,
-    title: m.title.romaji || m.title.english || m.title.native || '',
-    titleEnglish: m.title.english || '',
-    cover: m.coverImage.extraLarge || m.coverImage.large || '',
-    rating: m.averageScore ? Math.round(m.averageScore) / 10 : null,
+    title: a.canonicalTitle || t.en || t.en_jp || '',
+    titleEnglish: t.en || '',
+    cover: (a.posterImage && (a.posterImage.large || a.posterImage.original)) || '',
+    rating: a.averageRating ? Math.round((parseFloat(a.averageRating) / 10) * 10) / 10 : null,
+    episodes: a.episodeCount || 0,
+    status: a.status || '',
+    genres: [],
+    description: (a.synopsis || '').slice(0, 1200),
+    nextEpisode: null,
+  };
+}
+function mapJikan(m) {
+  return {
+    id: m.mal_id,
+    title: m.title || m.title_english || '',
+    titleEnglish: m.title_english || '',
+    cover: (m.images && m.images.jpg && (m.images.jpg.large_image_url || m.images.jpg.image_url)) || '',
+    rating: m.score ? Math.round(m.score * 10) / 10 : null,
     episodes: m.episodes || 0,
     status: m.status || '',
-    genres: m.genres || [],
-    description: (m.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1200),
-    nextEpisode: m.nextAiringEpisode ? { episode: m.nextAiringEpisode.episode, airingAt: m.nextAiringEpisode.airingAt } : null,
-  }));
+    genres: (m.genres || []).map((g) => g.name),
+    description: (m.synopsis || '').slice(0, 1200),
+    nextEpisode: null,
+  };
 }
 app.get('/api/anime/trending', async (req, res) => {
   try {
-    const d = await cached('anime:trending', 10 * 60000, () => anilistGraphql({ page: 1, sort: ['TRENDING_DESC'] }));
-    res.json({ result: 'ok', data: mapAnime(d) });
-  } catch (e) {
-    res.status(502).json({ error: e.message });
-  }
+    const d = await cached('anime:trending', 10 * 60000, async () => {
+      try { return { via: 'kitsu', data: (await kitsuFetch('/trending/anime?limit=24')).data.map(mapKitsu) }; } catch {}
+      return { via: 'jikan', data: (await jikanFetch('/top/anime?filter=bypopularity&limit=24')).data.map(mapJikan) };
+    });
+    res.json({ result: 'ok', data: d.data });
+  } catch (e) { res.status(502).json({ error: e.message }); }
 });
 app.get('/api/anime/popular', async (req, res) => {
   try {
-    const d = await cached('anime:popular', 30 * 60000, () => anilistGraphql({ page: 1, sort: ['POPULARITY_DESC'] }));
-    res.json({ result: 'ok', data: mapAnime(d) });
-  } catch (e) {
-    res.status(502).json({ error: e.message });
-  }
+    const d = await cached('anime:popular', 30 * 60000, async () => {
+      try { return { via: 'kitsu', data: (await kitsuFetch('/anime?sort=-userCount&page%5Blimit%5D=20')).data.map(mapKitsu) }; } catch {}
+      return { via: 'jikan', data: (await jikanFetch('/top/anime?filter=bypopularity&limit=24')).data.map(mapJikan) };
+    });
+    res.json({ result: 'ok', data: d.data });
+  } catch (e) { res.status(502).json({ error: e.message }); }
 });
 app.get('/api/anime/search', async (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q) return res.json({ result: 'ok', data: [] });
   try {
-    const d = await cached(`anime:search:${q.toLowerCase()}`, 10 * 60000, () => anilistGraphql({ page: 1, sort: ['POPULARITY_DESC'], search: q }));
-    res.json({ result: 'ok', data: mapAnime(d) });
-  } catch (e) {
-    res.status(502).json({ error: e.message });
-  }
+    const d = await cached('anime:search:' + q.toLowerCase(), 10 * 60000, async () => {
+      try { return { via: 'kitsu', data: (await kitsuFetch('/anime?filter%5Btext%5D=' + encodeURIComponent(q) + '&page%5Blimit%5D=20')).data.map(mapKitsu) }; } catch {}
+      return { via: 'jikan', data: (await jikanFetch('/anime?q=' + encodeURIComponent(q) + '&limit=24')).data.map(mapJikan) };
+    });
+    res.json({ result: 'ok', data: d.data });
+  } catch (e) { res.status(502).json({ error: e.message }); }
 });
-// airing schedule (soon)
-const AIRING_Q = `query{Page(page:1,perPage:20){airingSchedules(notYetAired:true,sort:[TIME]){airingAt,episode,media{id,title{romaji english},coverImage{medium},averageScore}}}}`;
 app.get('/api/anime/airing', async (req, res) => {
   try {
     const d = await cached('anime:airing', 30 * 60000, async () => {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 45000);
       try {
-        const r = await fetch('https://graphql.anilist.co', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
-          body: JSON.stringify({ query: AIRING_Q }),
-          signal: ctrl.signal,
-        });
-        if (!r.ok) throw new Error('anilist ' + r.status);
-        return await r.json();
-      } finally {
-        clearTimeout(timer);
-      }
+        const r = (await jikanFetch('/seasons/upcoming')).data || [];
+        return { via: 'jikan', data: r.slice(0, 20).map((m) => ({ animeId: m.mal_id, title: m.title || '', cover: (m.images && m.images.jpg && m.images.jpg.image_url) || '', rating: m.score ? Math.round(m.score * 10) / 10 : null, episode: null, airingAt: null })) };
+      } catch {}
+      const r = (await kitsuFetch('/anime?filter[status]=upcoming&page[limit]=20')).data || [];
+      return { via: 'kitsu', data: r.map(mapKitsu) };
     });
-    const rows = (d.data && d.data.Page && d.data.Page.airingSchedules) || [];
-    res.json({
-      result: 'ok',
-      data: rows.map((s) => ({
-        animeId: s.media.id,
-        title: s.media.title.romaji || s.media.title.english || '',
-        cover: s.media.coverImage.medium || '',
-        rating: s.media.averageScore ? Math.round(s.media.averageScore) / 10 : null,
-        episode: s.episode,
-        airingAt: s.airingAt,
-      })),
+    res.json({ result: 'ok', data: d.data });
+  } catch (e) { res.status(502).json({ error: e.message }); }
+});
+app.get('/api/anime/:id', async (req, res) => {
+  try {
+    const d = await cached('anime:id:' + req.params.id, 60 * 60000, async () => {
+      try { return { via: 'jikan', data: mapJikan((await jikanFetch('/anime/' + req.params.id + '/full')).data) }; } catch {}
+      return { via: 'kitsu', data: mapKitsu((await kitsuFetch('/anime/' + req.params.id)).data) };
     });
-  } catch (e) {
-    res.status(502).json({ error: e.message });
-  }
+    res.json({ result: 'ok', data: d.data });
+  } catch (e) { res.status(502).json({ error: e.message }); }
 });
 
 // ---------- public remote config (ads & access) ----------

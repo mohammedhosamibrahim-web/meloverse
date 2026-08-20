@@ -12,10 +12,10 @@ android {
         applicationId = "com.meloverse.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.7.0"
+        versionCode = 9
+        versionName = "0.8.0"
         resourceConfigurations += listOf("ar", "en")
-        buildConfigField("String", "SERVER_URL", "\"https://msgid-tracker-shelter-disclosure.trycloudflare.com\"")
+        buildConfigField("String", "SERVER_URL", "\"https://meloverse-production.up.railway.app\"")
     }
 
     signingConfigs {

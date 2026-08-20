@@ -1,7 +1,6 @@
 node_modules/
 tools/
 web/data/
-web/builds/
 web/server.log
 web/tunnel.log
 dist/
